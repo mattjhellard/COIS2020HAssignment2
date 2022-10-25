@@ -7,15 +7,15 @@
 using System;
 namespace OpenHashTableRevisited
 {
-public interface IHashTable<TKey,TValue>
-{
-    void Insert(TKey key, TValue value);
-    bool Remove(TKey key);
-    TValue Get(TKey key);
-}
+    public interface IHashTable<TKey, TValue>
+    {
+        void Insert(TKey key, TValue value);
+        bool Remove(TKey key);
+        TValue Get(TKey key);
+    }
 
-public class HashTable <TKey, TValue> : IHashTable<TKey,TValue>
-{
+    public class HashTable<TKey, TValue> : IHashTable<TKey, TValue>
+    {
         private class Node
         {
             public TKey key;
@@ -44,7 +44,7 @@ public class HashTable <TKey, TValue> : IHashTable<TKey,TValue>
 
         public void MakeEmpty()
         {
-            for(int i =0; i < numBuckets; i++)
+            for (int i = 0; i < numBuckets; i++)
             {
                 HT[i] = null;
             }
@@ -53,18 +53,18 @@ public class HashTable <TKey, TValue> : IHashTable<TKey,TValue>
 
         private int NextPrime(int current) //returns the next prime based on argument (can return argument if it's prime)
         {
-            while (current<int.MaxValue) //loops until prime is found or int limit is reached
+            while (current < int.MaxValue) //loops until prime is found or int limit is reached
             {
                 int i; //declared outside for post-loop use
                 bool exit = false; //for loop exit condition
-                for(i=2; i*i<=current && exit==false; i++) //checks all values of i until proven not prime
+                for (i = 2; i * i <= current && exit == false; i++) //checks all values of i until proven not prime
                 {
                     if (current % i == 0) //if i leaves 0 remainder after dividing current (i cannot ==1 or ==current)
                     {
                         exit = true; //exits loop on next condition check
                     }
                 }
-                if (exit==false) //if for loop was exited and exit==false, then no number from 2 to sqrt(current) was found to divide with a remainder of 0, i.e, current is prime
+                if (exit == false) //if for loop was exited and exit==false, then no number from 2 to sqrt(current) was found to divide with a remainder of 0, i.e, current is prime
                 {
                     return current;
                 }
@@ -82,7 +82,7 @@ public class HashTable <TKey, TValue> : IHashTable<TKey,TValue>
             HT = new Node[numBuckets];
             MakeEmpty();
 
-            for(int i=0; i<oldNumBuckets; i++)
+            for (int i = 0; i < oldNumBuckets; i++)
             {
                 Node p = oldHT[i];
                 while (p != null)
@@ -94,7 +94,33 @@ public class HashTable <TKey, TValue> : IHashTable<TKey,TValue>
                 }
             }
         }
-}
+
+        public void Insert(TKey key, TValue value)
+        {
+            int i = key.GetHashCode() % numBuckets;
+            Node p = HT[i];
+
+            while(p != null)
+            {
+                if (p.key.Equals(key))
+                {
+                    throw new InvalidOperationException("Duplicate key");
+                }
+                else
+                {
+                    p = p.next;
+                }
+            }
+
+            HT[i] = new Node(key, value, HT[i]);
+            numItems++;
+
+            if((double)numItems / numBuckets > 5.0)
+            {
+                ReHash();
+            }
+        }
+    }
 }
 
 public class Point
