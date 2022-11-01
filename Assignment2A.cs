@@ -11,7 +11,7 @@ namespace OpenHashTableRevisited
     {
         void Insert(TKey key, TValue value);
         bool Remove(TKey key);
-        TValue Get(TKey key);
+        TValue Retrieve(TKey key);
     }
 
     public class HashTable<TKey, TValue> : IHashTable<TKey, TValue>
@@ -100,7 +100,7 @@ namespace OpenHashTableRevisited
             int i = key.GetHashCode() % numBuckets;
             Node p = HT[i];
 
-            while(p != null)
+            while (p != null)
             {
                 if (p.key.Equals(key))
                 {
@@ -115,9 +115,95 @@ namespace OpenHashTableRevisited
             HT[i] = new Node(key, value, HT[i]);
             numItems++;
 
-            if((double)numItems / numBuckets > 5.0)
+            if ((double)numItems / numBuckets > 5.0)
             {
                 ReHash();
+            }
+        }
+
+        // Remove
+        // Delete (if found) the <key,value> with the given key
+        // Return true if successful, false otherwise
+        public bool Remove(TKey key)
+        {
+            int i = key.GetHashCode() % numBuckets;
+            Node p = HT[i];
+
+            if (p == null)
+            {
+                return false;
+            }
+            else
+            {
+                // Successful remove of the first item in a bucket
+                if (p.key.Equals(key))
+                {
+                    HT[i] = HT[i].next;
+                    numItems--;
+                    return true;
+                }
+                else
+                {
+                    while (p.next != null)
+                    {
+                        // Successful remove (<key,value> found and deleted)
+                        if (p.next.key.Equals(key))
+                        {
+                            p.next = p.next.next;
+                            numItems--;
+                            return true;
+                        }
+                        else
+                        {
+                            p = p.next;
+                        }
+                    }
+                }
+                // Unsuccessful remove (key not found)
+                return false;
+            }
+        }
+
+        // Retrieve
+        // Returns (if found) the value of the given key
+        // If the key is not found, an exception is thrown
+        public TValue Retrieve(TKey key)
+        {
+            int i = key.GetHashCode() % numBuckets;
+            Node p = HT[i];
+
+            while (p != null)
+            {
+                // Successful retrieval (value found and returned)
+                if (p.key.Equals(key))
+                {
+                    return p.value;
+                }
+                else
+                {
+                    p = p.next;
+                }
+
+            }
+            throw new InvalidOperationException("Key not found");
+        }
+
+        public void Print()
+        {
+            int i;
+            Node p;
+
+            for (i = 0; i < numBuckets; i++)
+            {
+                Console.Write(i.ToString().PadLeft(2) + ": ");
+
+                p = HT[i];
+                while (p != null)
+                {
+                    Console.Write("<" + p.key.ToString() + "," + p.value.ToString() + "> ");
+                    p = p.next;
+                }
+                Console.WriteLine();
             }
         }
     }
