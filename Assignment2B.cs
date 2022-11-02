@@ -9,18 +9,25 @@ class Node : IComparable
     public int Frequency { get; set; }
     public Node Left { get; set; }
     public Node Right { get; set; }
+
     public Node(char character, int frequency, Node left, Node right)
     {
-        this.Character = Character;
+        this.Character = character;
         this.Frequency = frequency;
         this.Left = left;
         this.Right = right;
     }
 
     // 3 marks
+    //Compare the frequency of 2 nodes
     public int CompareTo(Object obj)
     {
-        //Compare the frequency of 2 nodes
+        if (obj != null)
+        {
+            Console.WriteLine(obj.GetType);
+        }
+
+
         return 1; //remove later
     }
 }
@@ -35,12 +42,16 @@ class Huffman
         int[] F = AnalyzeText(S);
 
         //TEsting
-        Console.WriteLine(F[0]);
-        Console.WriteLine(F[1]);
-        Console.WriteLine(F[2]);
-        Console.WriteLine(F[3]);
+        //Console.WriteLine(F[0]);
+        //Console.WriteLine(F[1]);
+        //Console.WriteLine(F[2]);
+        //Console.WriteLine(F[3]);
+
 
         //build huffman tree
+        Build(F);
+
+
     }
 
     // 8 marks
@@ -48,8 +59,6 @@ class Huffman
     //https://www.geeksforgeeks.org/print-characters-frequencies-order-occurrence/  better than the way I was going to solve it
     private int[] AnalyzeText(string S)
     {
-        int[] freqArray = new int[S.Length];
-        int freqIndex = 0;
         Dictionary<char, int> charFrequencyDict = new Dictionary<char, int>();
 
         foreach (char c in S)
@@ -65,6 +74,9 @@ class Huffman
         }
 
         //Move all freq. values to the int[] array
+        int[] freqArray = new int[charFrequencyDict.Count];
+        int freqIndex = 0;
+
         foreach (KeyValuePair<char, int> entry in charFrequencyDict)
         {
             freqArray[freqIndex] = entry.Value;
@@ -76,12 +88,70 @@ class Huffman
 
     // 16 marks
     // Build a Huffman tree based on the character frequencies greater than 0 (invoked by Huffman)
-    //private void Build(int[] F) {       PriorityQueue<Node> PQ; …}
+    private void Build(int[] F)
+    {
+        PriorityQueue<Node, int> PQ = new PriorityQueue<Node, int>();
+
+        //Create leaf nodes for all unique characters in the string
+        int indexFreq = 0;
+        foreach (int item in F)
+        {
+            //Get list of all unique chars in the string and match with frequencies
+
+
+
+            //Replace 'c' with character for the freq.
+
+
+            //Create new node
+            Node node = new Node('c', F[indexFreq], null, null);
+
+            //Add node to priority queue
+            PQ.Enqueue(node, node.Frequency);
+            indexFreq++;
+        }
+
+        //While the Huffman tree is not finished building
+        while (PQ.Count > 1)
+        {
+            //Get the two lowest priority nodes
+            Node minNodeOne = PQ.Dequeue();
+            Node minNodeTwo = PQ.Dequeue();
+
+            int frequencySum = minNodeOne.Frequency + minNodeTwo.Frequency;
+
+            //Make a new node based on the info from the two nodes
+            Node internalNode = new Node('/', (frequencySum), minNodeOne, minNodeTwo);
+
+            PQ.Enqueue(internalNode, internalNode.Frequency);
+        }
+
+        //Testing
+        PrintTree(PQ.Peek(), 0);
+    }
+
+    //Print Binary Tree
+    //Not part of the assignment
+    //Taken from Binary Tree slide
+    private void PrintTree(Node root, int indent)
+    {
+        if (root != null)
+        {
+            PrintTree(root.Right, indent + 5);
+            Console.WriteLine(new String(' ', indent) + root.Frequency);
+            PrintTree(root.Left, indent + 5);
+        }
+    }
 
     // 12 marks
     // Create the code of 0s and 1s for each character by traversing the Huffman tree (invoked by Huffman)
     // Store the codes in Dictionary D using the char as the key
-    //private void CreateCodes() { … }
+    private void CreateCodes()
+    {
+        //Use preorder traversal
+
+        //Store the char and binary code in dictionary D
+    }
 
     // 8 marks
     // Encode the given text and return a string of 0s and 1s
@@ -97,7 +167,7 @@ class TestClass
 {
     static void Main()
     {
-        string testString = "cooleeelooo";
+        string testString = "coollleee";
         Huffman huffmanTest = new Huffman(testString);
 
     }
