@@ -3,6 +3,11 @@
 //Date:
 //
 
+
+
+using System.Collections;
+using System.Reflection.PortableExecutable;
+
 class Node : IComparable
 {
     public char Character { get; set; }
@@ -41,17 +46,21 @@ class Huffman
         //Analyze string for letter frequencies
         int[] F = AnalyzeText(S);
 
-        //TEsting
-        //Console.WriteLine(F[0]);
-        //Console.WriteLine(F[1]);
-        //Console.WriteLine(F[2]);
-        //Console.WriteLine(F[3]);
-
-
-        //build huffman tree
+        //Build huffman tree
         Build(F);
 
 
+    }
+
+    //Print out an array
+    static void PrintArray(int[] array)
+    {
+        int count = 0;
+        foreach (var item in array)
+        {
+            Console.WriteLine("Index: " + count + " " + item.ToString());
+            count++;
+        }
     }
 
     // 8 marks
@@ -73,14 +82,34 @@ class Huffman
             }
         }
 
-        //Move all freq. values to the int[] array
-        int[] freqArray = new int[charFrequencyDict.Count];
+        int[] freqArray = new int[53];  //53 A-Z,a-z, and space
         int freqIndex = 0;
+        int offset = 26;
 
+        //Map index to character ascii value
         foreach (KeyValuePair<char, int> entry in charFrequencyDict)
         {
+            //Uppercase
+            if (entry.Key >= 'A' & entry.Key <= 'Z')
+            {
+                freqIndex = entry.Key - 'A';
+            }
+            //Lowercase
+            else if (entry.Key >= 'a' & entry.Key <= 'z')
+            {
+                freqIndex = (entry.Key - 'a') + offset;
+            }
+            //Space
+            else if (entry.Key == ' ')
+            {
+                freqIndex = 52;  //Arbitrarily assigned to the last array index
+            }
+            else
+            {
+                //throw exception
+            }
+
             freqArray[freqIndex] = entry.Value;
-            freqIndex++;
         }
 
         return freqArray;
@@ -92,28 +121,49 @@ class Huffman
     {
         PriorityQueue<Node, int> PQ = new PriorityQueue<Node, int>();
 
+        PrintArray(F);
+
         //Create leaf nodes for all unique characters in the string
-        int indexFreq = 0;
-        foreach (int item in F)
+        int freqIndex = 0;
+        int offset = 26; //
+        char character = ' ';   //Default
+        foreach (int freq in F)
         {
-            //Get list of all unique chars in the string and match with frequencies
+            if (freq == 0)
+            {
+                //Skip
+            }
+            else
+            {
+                //Create a new leaf node
+                Console.WriteLine(freqIndex);
 
+                if (freqIndex >= 0 & freqIndex <= 25)
+                {
+                    character = (char)(freqIndex + 65);
+                }
+                //Lowercase
+                else if (freqIndex >= 25 & freqIndex <= 51)
+                {
+                    character = (char)(freqIndex + 97 - offset);
+                }
+                //Space
+                else if (freqIndex == 52)
+                {
+                    character = ' ';  //Arbitrarily assigned to the last array index
+                }
+                Console.WriteLine(character);
 
+                Node node = new Node(character, freq, null, null);
 
-            //Replace 'c' with character for the freq.
-
-
-            //Create new node
-            Node node = new Node('c', F[indexFreq], null, null);
-
-            //Add node to priority queue
-            PQ.Enqueue(node, node.Frequency);
-            indexFreq++;
+                //Add node to priority queue
+                PQ.Enqueue(node, node.Frequency);
+            }
+            freqIndex++;
         }
-
+        /*
         //While the Huffman tree is not finished building
-        while (PQ.Count > 1)
-        {
+        while (PQ.Count > 1) {
             //Get the two lowest priority nodes
             Node minNodeOne = PQ.Dequeue();
             Node minNodeTwo = PQ.Dequeue();
@@ -127,7 +177,7 @@ class Huffman
         }
 
         //Testing
-        PrintTree(PQ.Peek(), 0);
+        PrintTree(PQ.Peek(), 0);*/
     }
 
     //Print Binary Tree
@@ -167,7 +217,8 @@ class TestClass
 {
     static void Main()
     {
-        string testString = "coollleee";
+        string testString = "ABC abc";
+        string testStringAll = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ";
         Huffman huffmanTest = new Huffman(testString);
 
     }
