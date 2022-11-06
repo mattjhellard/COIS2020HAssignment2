@@ -1,11 +1,9 @@
-//Program:
-//Author: Cole Miller
-//Date:
-//
-
-
+//Program:  Huffman Tree
+//Author:   Cole Miller
+//Date:     2022-11-06
 
 using System.Collections;
+using System.ComponentModel.Design.Serialization;
 using System.Net.Http.Headers;
 using System.Reflection.PortableExecutable;
 
@@ -40,23 +38,17 @@ class Node : IComparable
 class Huffman
 {
     private Node HT; // Huffman tree to create codes and decode text
-    private Dictionary<char, string> D = new Dictionary<char, string>(); // Dictionary to encode text
-                                                                         // Constructor
+    private Dictionary<char, string> D = new Dictionary<char, string>();            // Dictionary to encode text
+    private Dictionary<string, char> inverseD = new Dictionary<string, char>();     // Dictionary to decode text
+
+    // Constructor
     public Huffman(string S)
     {
-        //Analyze string for letter frequencies
         int[] F = AnalyzeText(S);
 
-        //Build huffman tree
         Build(F);
 
-        //Testing
-        PrintTree(HT, 0);
-
         CreateCodes();
-
-        //Testing
-        PrintDictCodes();
     }
 
     //Print out an array
@@ -71,7 +63,6 @@ class Huffman
     }
 
     //Print Binary Tree
-    //Not part of the assignment
     //Taken from Binary Tree slide
     private void PrintTree(Node root, int indent)
     {
@@ -136,12 +127,10 @@ class Huffman
             }
             else
             {
-                //throw exception
+                //throw exception, character not recognized
             }
-
             freqArray[freqIndex] = entry.Value;
         }
-
         return freqArray;
     }
 
@@ -153,7 +142,7 @@ class Huffman
 
         //Create leaf nodes for all unique characters in the string
         int freqIndex = 0;
-        int offset = 26; //
+        int offset = 26;        //
         char character = ' ';   //Default
         foreach (int freq in F)
         {
@@ -164,7 +153,6 @@ class Huffman
             else
             {
                 //Create a new leaf node
-                //Console.WriteLine(freqIndex);
                 if (freqIndex >= 0 & freqIndex <= 25)
                 {
                     character = (char)(freqIndex + 65);
@@ -179,11 +167,10 @@ class Huffman
                 {
                     character = ' ';  //Arbitrarily assigned to the last array index
                 }
-                //Console.WriteLine(character);
 
                 Node node = new Node(character, freq, null, null);
 
-                //Add node to priority queue
+                //Add node to the priority queue
                 PQ.Enqueue(node, node.Frequency);
             }
             freqIndex++;
@@ -203,7 +190,7 @@ class Huffman
 
             PQ.Enqueue(internalNode, internalNode.Frequency);
         }
-
+        //PQ.Dequeue() will be the root node of the finished Huffman Tree
         this.HT = PQ.Dequeue();
     }
 
@@ -213,25 +200,28 @@ class Huffman
     private void CreateCodes()
     {
         string charToHuffmanCode = "";
-        Preorder(this.HT, charToHuffmanCode);
+        CreateHuffmanCodeDictionaries(this.HT, charToHuffmanCode);
     }
 
-    //Recursiveley traverse a binary tree using Preorder traversal
-    //If you go left add "0" to the string, right add a "1"
-    private void Preorder(Node root, string charToHuffmanCode)
+    //Recursiveley traverse a binary tree using Preorder traversal and build two dictionaries for encoding/decoding
+    private void CreateHuffmanCodeDictionaries(Node root, string charToHuffmanCode)
     {
         if (root != null)
         {
             if (root.Left == null)
             {
+                //Add dictionary code for encoding strings
                 this.D.Add(root.Character, charToHuffmanCode);
+
+                //Add inverse dictionary code for decoding strings
+                //https://stackoverflow.com/questions/2444033/get-dictionary-key-by-value
+                this.inverseD.Add(charToHuffmanCode, root.Character);
 
                 //Remove the last char from the string
                 charToHuffmanCode = charToHuffmanCode.Remove(charToHuffmanCode.Length - 1, 1);
             }
-
-            Preorder(root.Left, charToHuffmanCode + "0");
-            Preorder(root.Right, charToHuffmanCode + "1");
+            CreateHuffmanCodeDictionaries(root.Left, charToHuffmanCode + "0");
+            CreateHuffmanCodeDictionaries(root.Right, charToHuffmanCode + "1");
         }
     }
 
@@ -240,26 +230,23 @@ class Huffman
     public string Encode(string S)
     {
         string encodedString = "";
-        string charToEncodedString;
+        string foundCharacter;
 
         //Encode string using dictionary
         try
         {
-            //
             foreach (char character in S)
             {
                 //Find code in dictionary
-                charToEncodedString = this.D[character];
+                foundCharacter = this.D[character];
 
-                //Assign code to encode string
-                encodedString = encodedString + charToEncodedString;
+                encodedString = encodedString + foundCharacter;
             }
         }
         catch
         {
-            return encodedString = "Exception: Please enter in a string with characters from the tree.";
+            //Exception: Please enter in a string with characters from the tree.
         }
-
         return encodedString;
     }
 
@@ -268,10 +255,38 @@ class Huffman
     public string Decode(string S)
     {
         string decodedString = "";
+        string tempCode = "";
+        char tempChar = ' ';
+        Node root = this.HT;
 
-        //Traverse the HuffmanTree to decode b/c you don't know when to stop
+        foreach (char character in S)
+        {
+            //Left
+            if (character == '0')
+            {
+                tempCode = tempCode + character;
+                root = root.Left;
+            }
+            //Right, character == '1'
+            else
+            {
+                tempCode = tempCode + character;
+                root = root.Right;
+            }
 
+            //If the root is at a leaf node
+            if (root.Left == null)
+            {
+                //Get decoded value from dictionary
+                tempChar = this.inverseD[tempCode];
 
+                decodedString = decodedString + tempChar;
+
+                //Reset
+                tempCode = "";
+                root = this.HT;
+            }
+        }
         return decodedString;
     }
 }
@@ -283,15 +298,15 @@ class TestClass
     {
         string testString = "Coollleeee";
         string testStringAll = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ";
-        Huffman huffmanTest = new Huffman(testString);
+        Huffman huffmanTest = new Huffman(testStringAll);
 
         //Encode
-        string testEncodeString = "Cole";
+        string testEncodeString = "Cole Miller";
         string encodedTestString = huffmanTest.Encode(testEncodeString);
         Console.WriteLine(encodedTestString);
 
         //Decode
-        string deencodedTestString = huffmanTest.Decode(testEncodeString);
-        Console.WriteLine(deencodedTestString);
+        string decodedTestString = huffmanTest.Decode(encodedTestString);
+        Console.WriteLine(decodedTestString);
     }
 }
