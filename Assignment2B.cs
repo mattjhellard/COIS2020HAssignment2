@@ -39,8 +39,8 @@ class Node : IComparable
 class Huffman
 {
     private Node HT; // Huffman tree to create codes and decode text
-    private Dictionary<char, string> D; // Dictionary to encode text
-                                        // Constructor
+    private Dictionary<char, string> D = new Dictionary<char, string>(); // Dictionary to encode text
+                                                                         // Constructor
     public Huffman(string S)
     {
         //Analyze string for letter frequencies
@@ -49,11 +49,15 @@ class Huffman
         //Build huffman tree
         Build(F);
 
+        //Testing
+        PrintTree(HT, 0);
 
+        CreateCodes();
+        PrintDictCodes();
     }
 
     //Print out an array
-    static void PrintArray(int[] array)
+    private void PrintArray(int[] array)
     {
         int count = 0;
         foreach (var item in array)
@@ -61,6 +65,29 @@ class Huffman
             Console.WriteLine("Index: " + count + " " + item.ToString());
             count++;
         }
+    }
+
+    //Print Binary Tree
+    //Not part of the assignment
+    //Taken from Binary Tree slide
+    private void PrintTree(Node root, int indent)
+    {
+        if (root != null)
+        {
+            PrintTree(root.Right, indent + 5);
+            Console.WriteLine(new String(' ', indent) + root.Frequency + ' ' + root.Character);
+            PrintTree(root.Left, indent + 5);
+        }
+    }
+
+    //Print out every 
+    private void PrintDictCodes()
+    {
+        foreach (KeyValuePair<char, string> entry in this.D)
+        {
+            Console.WriteLine("Char: " + entry.Key + " Code: " + entry.Value);
+        }
+        Console.WriteLine("End of Dict");
     }
 
     // 8 marks
@@ -121,8 +148,6 @@ class Huffman
     {
         PriorityQueue<Node, int> PQ = new PriorityQueue<Node, int>();
 
-        PrintArray(F);
-
         //Create leaf nodes for all unique characters in the string
         int freqIndex = 0;
         int offset = 26; //
@@ -136,8 +161,7 @@ class Huffman
             else
             {
                 //Create a new leaf node
-                Console.WriteLine(freqIndex);
-
+                //Console.WriteLine(freqIndex);
                 if (freqIndex >= 0 & freqIndex <= 25)
                 {
                     character = (char)(freqIndex + 65);
@@ -152,7 +176,7 @@ class Huffman
                 {
                     character = ' ';  //Arbitrarily assigned to the last array index
                 }
-                Console.WriteLine(character);
+                //Console.WriteLine(character);
 
                 Node node = new Node(character, freq, null, null);
 
@@ -161,9 +185,10 @@ class Huffman
             }
             freqIndex++;
         }
-        /*
+
         //While the Huffman tree is not finished building
-        while (PQ.Count > 1) {
+        while (PQ.Count > 1)
+        {
             //Get the two lowest priority nodes
             Node minNodeOne = PQ.Dequeue();
             Node minNodeTwo = PQ.Dequeue();
@@ -176,21 +201,7 @@ class Huffman
             PQ.Enqueue(internalNode, internalNode.Frequency);
         }
 
-        //Testing
-        PrintTree(PQ.Peek(), 0);*/
-    }
-
-    //Print Binary Tree
-    //Not part of the assignment
-    //Taken from Binary Tree slide
-    private void PrintTree(Node root, int indent)
-    {
-        if (root != null)
-        {
-            PrintTree(root.Right, indent + 5);
-            Console.WriteLine(new String(' ', indent) + root.Frequency);
-            PrintTree(root.Left, indent + 5);
-        }
+        this.HT = PQ.Dequeue();
     }
 
     // 12 marks
@@ -198,9 +209,27 @@ class Huffman
     // Store the codes in Dictionary D using the char as the key
     private void CreateCodes()
     {
-        //Use preorder traversal
+        string charToHuffmanCode = "";
+        Preorder(this.HT, charToHuffmanCode);
+    }
 
-        //Store the char and binary code in dictionary D
+    //Recursiveley traverse a binary tree using Preorder traversal
+    //If you go left add "0" to the string, right add a "1"
+    private void Preorder(Node root, string charToHuffmanCode)
+    {
+        if (root != null)
+        {
+            if (root.Left == null)
+            {
+                this.D.Add(root.Character, charToHuffmanCode);
+
+                //Remove the last char from the string
+                charToHuffmanCode = charToHuffmanCode.Remove(charToHuffmanCode.Length - 1, 1);
+            }
+
+            Preorder(root.Left, charToHuffmanCode + "0");
+            Preorder(root.Right, charToHuffmanCode + "1");
+        }
     }
 
     // 8 marks
@@ -217,7 +246,7 @@ class TestClass
 {
     static void Main()
     {
-        string testString = "ABC abc";
+        string testString = "Cole";
         string testStringAll = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ";
         Huffman huffmanTest = new Huffman(testString);
 
