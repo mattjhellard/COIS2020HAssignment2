@@ -6,6 +6,7 @@
 
 
 using System.Collections;
+using System.Net.Http.Headers;
 using System.Reflection.PortableExecutable;
 
 class Node : IComparable
@@ -53,6 +54,8 @@ class Huffman
         PrintTree(HT, 0);
 
         CreateCodes();
+
+        //Testing
         PrintDictCodes();
     }
 
@@ -234,11 +237,43 @@ class Huffman
 
     // 8 marks
     // Encode the given text and return a string of 0s and 1s
-    //public string Encode(string S) { … }
+    public string Encode(string S)
+    {
+        string encodedString = "";
+        string charToEncodedString;
+
+        //Encode string using dictionary
+        try
+        {
+            //
+            foreach (char character in S)
+            {
+                //Find code in dictionary
+                charToEncodedString = this.D[character];
+
+                //Assign code to encode string
+                encodedString = encodedString + charToEncodedString;
+            }
+        }
+        catch
+        {
+            return encodedString = "Exception: Please enter in a string with characters from the tree.";
+        }
+
+        return encodedString;
+    }
 
     // 8 marks
     // Decode the given string of 0s and 1s and return the original text
-    //public string Decode(string S) { … }
+    public string Decode(string S)
+    {
+        string decodedString = "";
+
+        //Traverse the HuffmanTree to decode b/c you don't know when to stop
+
+
+        return decodedString;
+    }
 }
 
 //Main Program
@@ -246,9 +281,17 @@ class TestClass
 {
     static void Main()
     {
-        string testString = "Cole";
+        string testString = "Coollleeee";
         string testStringAll = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ";
         Huffman huffmanTest = new Huffman(testString);
 
+        //Encode
+        string testEncodeString = "Cole";
+        string encodedTestString = huffmanTest.Encode(testEncodeString);
+        Console.WriteLine(encodedTestString);
+
+        //Decode
+        string deencodedTestString = huffmanTest.Decode(testEncodeString);
+        Console.WriteLine(deencodedTestString);
     }
 }
