@@ -1,5 +1,5 @@
 //Program:  Huffman Tree
-//Author:   Cole Miller
+//Author:   Cole Miller, Matthew Hellard, and Jesse Laframboise
 //Date:     2022-11-06
 
 using System.Collections;
@@ -26,13 +26,32 @@ class Node : IComparable
     //Compare the frequency of 2 nodes
     public int CompareTo(Object obj)
     {
+        int value = 2;
         if (obj != null)
         {
-            Console.WriteLine(obj.GetType);
+            try
+            {
+                Node test = (Node)obj;
+
+                if (this.Frequency < test.Frequency)
+                {
+                    value = -1;
+                }
+                else if (this.Frequency == test.Frequency)
+                {
+                    value = 0;
+                }
+                else if (this.Frequency > test.Frequency)
+                {
+                    value = 1;
+                }
+            }
+            catch
+            {
+                //Exception: obj conversion error
+            }
         }
-
-
-        return 1; //remove later
+        return value;
     }
 }
 class Huffman
@@ -48,7 +67,13 @@ class Huffman
 
         Build(F);
 
+        //Testing
+        PrintTree(HT, 0);
+
         CreateCodes();
+
+        //Testing
+        PrintDictCodes();
     }
 
     //Print out an array
@@ -74,7 +99,7 @@ class Huffman
         }
     }
 
-    //Print out every 
+    //Print out every key/value pair for Dictionary D
     private void PrintDictCodes()
     {
         foreach (KeyValuePair<char, string> entry in this.D)
@@ -127,7 +152,7 @@ class Huffman
             }
             else
             {
-                //throw exception, character not recognized
+                //throw exception: character not recognized
             }
             freqArray[freqIndex] = entry.Value;
         }
@@ -142,8 +167,8 @@ class Huffman
 
         //Create leaf nodes for all unique characters in the string
         int freqIndex = 0;
-        int offset = 26;        //
-        char character = ' ';   //Default
+        int offset = 26;        //Used when switching from capital to lowercase letters
+        char character = ' ';   //Arbitrary default value
         foreach (int freq in F)
         {
             if (freq == 0)
@@ -296,17 +321,20 @@ class TestClass
 {
     static void Main()
     {
-        string testString = "Coollleeee";
-        string testStringAll = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ";
-        Huffman huffmanTest = new Huffman(testStringAll);
+        //Will throw exceptions if characters outside of the 53 approved ones are used
+        string[] testStrings = { "Cole", "Cole Miller", "Coollleeee", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ", "ABCVOK HDEsDA WefghjopDD SDdwtygj hyuvwxyz", "Programming is cool" };
 
-        //Encode
-        string testEncodeString = "Cole Miller";
-        string encodedTestString = huffmanTest.Encode(testEncodeString);
-        Console.WriteLine(encodedTestString);
+        foreach (string item in testStrings)
+        {
+            Huffman huffmanTest = new Huffman(item);
 
-        //Decode
-        string decodedTestString = huffmanTest.Decode(encodedTestString);
-        Console.WriteLine(decodedTestString);
+            //Encode
+            string encodedTestString = huffmanTest.Encode(item);
+            Console.WriteLine(encodedTestString);
+
+            //Decode
+            string decodedTestString = huffmanTest.Decode(encodedTestString);
+            Console.WriteLine(decodedTestString);
+        }
     }
 }
