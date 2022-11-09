@@ -1,19 +1,24 @@
-/*
+/* COIS 2020H - Assignment 2
+ * Original code provided by: Brian Patrick
+ * Modifications by (alphabetical): Cole Miller, Jesse Laframboise, Matthew Hellard
+ * 
  * How to run in VS:
  * create new Console App (.NET Frameword)
  * clear out code from new .cs file
- * copy and paste in this code in this .cs file
+ * copy and paste in this code into the new .cs file
  */
 using System;
 public interface IHashTable<TKey, TValue>
 {
-    void Insert(TKey key, TValue value);
-    bool Remove(TKey key);
-    TValue Retrieve(TKey key);
+    void Insert(TKey key, TValue value); // Insert a <key,value> pair
+    bool Remove(TKey key);               // Remove the value with key
+    TValue Retrieve(TKey key);           // Return the value of a key
 }
 
 public class HashTable<TKey, TValue> : IHashTable<TKey, TValue>
 {
+
+    // <key,value> pair (item)
     private class Node
     {
         public TKey key;
@@ -29,10 +34,10 @@ public class HashTable<TKey, TValue> : IHashTable<TKey, TValue>
         }
     }
 
-    private Node[] HT;
+    private Node[] HT; //actual hashtable, stored as array of nodes
     private Node[] header; //header node, seperate array is best minimal implementation (could also convert HT into List array but that wouldn't be minimal)
-    private int numBuckets;
-    private int numItems;
+    private int numBuckets; //number of buckets
+    private int numItems; //number of items
 
     public HashTable()
     {
@@ -46,7 +51,7 @@ public class HashTable<TKey, TValue> : IHashTable<TKey, TValue>
     {
         for (int i = 0; i < numBuckets; i++)
         {
-            header[i] = HT[i] = null;
+            header[i] = HT[i] = null; //set header and HT for each bucket to null
         }
         numItems = 0;
     }
@@ -84,13 +89,15 @@ public class HashTable<TKey, TValue> : IHashTable<TKey, TValue>
     private void ReHash()
     {
         int oldNumBuckets = numBuckets; //old number of buckets
-        Node[] oldHT = header; //old hashtable
+        Node[] oldHT = header; //old hashtable, uses header
 
         numBuckets = NextPrime(2 * numBuckets);
+        // Create the new hash table array and initialize each bucket to empty
         HT = new Node[numBuckets];
-        header = new Node[numBuckets];
+        header = new Node[numBuckets]; //header must change with HT to stay in sync
         MakeEmpty();
 
+        // Rehash items from the old to new hash table
         for (int i = 0; i < oldNumBuckets; i++)
         {
             Node p = oldHT[i];
@@ -112,7 +119,7 @@ public class HashTable<TKey, TValue> : IHashTable<TKey, TValue>
     public void Insert(TKey key, TValue value)
     {
         int i = key.GetHashCode() % numBuckets;
-        Node p = header[i];
+        Node p = header[i]; //uses header node
 
         while (p != null)
         {
@@ -126,7 +133,7 @@ public class HashTable<TKey, TValue> : IHashTable<TKey, TValue>
                 p = p.next;
             }
         }
-        header[i] = new Node(key, value, header[i]);
+        header[i] = new Node(key, value, header[i]); //uses header node
         numItems++;
 
         // Rehash if the average size of the buckets exceeds 5.0
@@ -134,8 +141,7 @@ public class HashTable<TKey, TValue> : IHashTable<TKey, TValue>
         {
             ReHash();
         }
-
-        Output();
+        Output(); //output always called after insertion to keep HT sorted
     }
 
     // Remove
@@ -144,7 +150,7 @@ public class HashTable<TKey, TValue> : IHashTable<TKey, TValue>
     public bool Remove(TKey key)
     {
         int i = key.GetHashCode() % numBuckets;
-        Node p = header[i];
+        Node p = header[i]; //uses header node
 
         if (p == null)
         {
@@ -155,8 +161,9 @@ public class HashTable<TKey, TValue> : IHashTable<TKey, TValue>
             // Successful remove of the first item in a bucket
             if (p.key.Equals(key))
             {
-                header[i] = header[i].next;
+                header[i] = header[i].next; //uses header node
                 numItems--;
+                Output(); //output always called after succesful remove to guarantee proper sorting
                 return true;
             }
             else
@@ -168,6 +175,7 @@ public class HashTable<TKey, TValue> : IHashTable<TKey, TValue>
                     {
                         p.next = p.next.next;
                         numItems--;
+                        Output(); //output always called after successful remove to guarantee proper sorting
                         return true;
                     }
                     else
@@ -187,7 +195,7 @@ public class HashTable<TKey, TValue> : IHashTable<TKey, TValue>
     public TValue Retrieve(TKey key)
     {
         int i = key.GetHashCode() % numBuckets;
-        Node p = header[i];
+        Node p = header[i]; //uses header node
 
         while (p != null)
         {
@@ -216,7 +224,7 @@ public class HashTable<TKey, TValue> : IHashTable<TKey, TValue>
         {
             Console.Write(i.ToString().PadLeft(2) + ": ");
 
-            p = header[i];
+            p = header[i]; //uses header node
             while (p != null)
             {
                 Console.Write("<" + p.key.ToString() + "," + p.value.ToString() + "> ");
@@ -226,6 +234,8 @@ public class HashTable<TKey, TValue> : IHashTable<TKey, TValue>
         }
     }
 
+    // Output
+    // Sorts contents of each bucket based on TKey (hash code), hash code used as it's the only comparable value (int) a key should inherently have. 
     public void Output()
     {
         for (int i = 0; i < numBuckets; i++) //for each bucket
@@ -248,16 +258,18 @@ public class HashTable<TKey, TValue> : IHashTable<TKey, TValue>
                 //removing current max node from unsorted
                 p = unsorted;
                 if (unsorted.key.Equals(Max.key))
-                { //if first value in unsorted matches max key
-                    unsorted = unsorted.next; //trim first value
+                { //if first value in unsorted matches max key,
+                    unsorted = unsorted.next; //trim first value.
                 }
                 else
                 {
-                    while (p != null && p.next != null) //go through unsorted,
+                    bool found = false; //control variable to exit asap, could theoretically also prevent excessive deletions but since keys must be unique it should never come up.
+                    while (found == false && p != null && p.next != null) //go through unsorted, 
                     {
                         if (p.next.key.Equals(Max.key)) //once max found,
                         {
                             p.next = p.next.next; //trim it
+                            found = true;
                         }
                         p = p.next;
                     }
@@ -287,8 +299,9 @@ public class Point : IComparable
 
     public override bool Equals(object obj)
     {
-        Point point = (Point)obj;
-        if (point.x == x && point.y == y)
+        Point point = (Point)obj; //cast not checked as exception will be thrown automatically and it isn't this method's job to handle it. (because it can't request a correction)
+
+        if (point.x == x && point.y == y) //if both data members match
         {
             return true;
         }
@@ -298,45 +311,242 @@ public class Point : IComparable
         }
     }
 
-    public override string ToString()
+    public override string ToString() //here to make printing simpler and prettier
     {
         return ("[" + x + " " + y + "]");
-        //return Convert.ToString(Math.Abs(x * y));
     }
 
     public int CompareTo(object obj)
     {
-        Point point = (Point)obj;
-        if (point.x - x == 0)
+        Point point = (Point)obj; //cast not checked as exception will be thrown automatically and it isn't this method's job to handle it. (because it can't request a correction)
+        if (point.x == x) //if x is equal,
         {
-            return (point.y - y);
+            return (y - point.y); //return y difference, subtracts CompareTo Point from caller Point because we want + if caller Point is bigger
         }
-        else
+        else //if x is not equal,
         {
-            return (point.x - x);
+            return (x - point.x); //return x difference, subtracts CompareTo Point from caller Point because we want + if caller Point is bigger
         }
     }
 }
 
-public class Demo
+public class Demo //for demonstrating and testing
 {
     public static void Main()
     {
-        int size = 10;
-        Point[,] tester = new Point[size, size];
-        HashTable<Point, int> table = new HashTable<Point, int>();
-        int i = 0;
-        for (int ix = 0; ix < size; ix++)
+        bool run = true;
+        HashTable<Point, int> table = new HashTable<Point, int>(); //only ints used for value in demo, specific type used doesn't really matter
+        Console.WriteLine("Open Hashtable Revisited\nNote: for this demo, all hashtables store ints, and all keys are Points");
+        while (run == true) //repeat until quit (or crash (not likely))
         {
-            for (int iy = 0; iy < size; iy++)
+            Console.Write(
+            "\nMenu:" +
+            "\nEmpty HT               (c):" +
+            "\nInsert point into HT   (i):" +
+            "\nRemove point from HT   (d):" +
+            "\nRetrieve point from HT (r):" +
+            "\nPrint entire HT        (p):" +
+            "\nMake, print dev HT     (a):" +
+            "\nQuit                   (q):" +
+            "\nInput :");
+
+            bool valid = false; //validation
+            char input = 'a'; //has to be set to something or VS complains, value will be overwritten before actually being used anyway 
+            while (valid == false)
+            { //main menu validation
+                try
+                {
+                    input = Char.ToLower(Convert.ToChar(Console.ReadLine())); //cap set so user need not worry
+                    valid = true;
+                }
+                catch (Exception)
+                {
+                    Console.WriteLine("Input error, please try again");
+                }
+            }
+
+            switch (input) //operation based on menu input
             {
-                i++;
-                tester[ix, iy] = new Point(ix, iy);
-                table.Insert(tester[ix, iy], i);
+                case 'c': //reset ht contents, doesn't reset bucket count
+                    table.MakeEmpty();
+                    break;
+
+                case 'i': //insert value
+                    int x = 0;
+                    int y = 0;
+                    int value = 0;
+                    valid = false;
+                    while (valid == false) //x validation
+                    {
+                        try
+                        {
+                            Console.Write("\nInput key x (int):");
+                            x = Convert.ToInt32(Console.ReadLine());
+                            valid = true;
+                        }
+                        catch (Exception)
+                        {
+                            Console.WriteLine("Input error, please try again");
+                        }
+                    }
+                    valid = false;
+                    while (valid == false) //y validation
+                    {
+                        try
+                        {
+                            Console.Write("\nInput key y (int):");
+                            y = Convert.ToInt32(Console.ReadLine());
+                            valid = true;
+                        }
+                        catch (Exception)
+                        {
+                            Console.WriteLine("Input error, please try again");
+                        }
+                    }
+                    valid = false;
+                    while (valid == false) //value validation
+                    {
+                        try
+                        {
+                            Console.Write("\nInput value (int):");
+                            value = Convert.ToInt32(Console.ReadLine());
+                            valid = true;
+                        }
+                        catch (Exception)
+                        {
+                            Console.WriteLine("Input error, please try again");
+                        }
+                    }
+                    Point key = new Point(x, y);
+                    try
+                    {
+                        table.Insert(key, value); //actual insertion
+                    }
+                    catch (InvalidOperationException) //if this exception is thrown, the key already existed
+                    {
+                        Console.WriteLine("Key already exists in hashtable"); 
+                    }
+                    break;
+
+                case 'd': //remove value from hashtable
+                    x = 0;
+                    y = 0;
+                    valid = false;
+                    while (valid == false) //x validation
+                    {
+                        try
+                        {
+                            Console.Write("\nInput key x (int):");
+                            x = Convert.ToInt32(Console.ReadLine());
+                            valid = true;
+                        }
+                        catch (Exception)
+                        {
+                            Console.WriteLine("Input error, please try again");
+                        }
+                    }
+                    valid = false;
+                    while (valid == false) //y validation
+                    {
+                        try
+                        {
+                            Console.Write("\nInput key y (int):");
+                            y = Convert.ToInt32(Console.ReadLine());
+                            valid = true;
+                        }
+                        catch (Exception)
+                        {
+                            Console.WriteLine("Input error, please try again");
+                        }
+                    }
+                    key = new Point(x, y);
+                    valid = table.Remove(key); //valid acts as bool checker for if remove succeeded
+                    if (valid)
+                    {
+                        Console.WriteLine("Successfully removed");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Could not remove key");
+                    }
+                    break;
+
+                case 'r': //retreive value
+                    x = 0;
+                    y = 0;
+                    valid = false;
+                    while (valid == false) //x validation
+                    {
+                        try
+                        {
+                            Console.Write("\nInput key x (int):");
+                            x = Convert.ToInt32(Console.ReadLine());
+                            valid = true;
+                        }
+                        catch (Exception)
+                        {
+                            Console.WriteLine("Input error, please try again");
+                        }
+                    }
+                    valid = false;
+                    while (valid == false) //y validation
+                    {
+                        try
+                        {
+                            Console.Write("\nInput key y (int):");
+                            y = Convert.ToInt32(Console.ReadLine());
+                            valid = true;
+                        }
+                        catch (Exception)
+                        {
+                            Console.WriteLine("Input error, please try again");
+                        }
+                    }
+                    key = new Point(x, y);
+                    try
+                    {
+                        value = table.Retrieve(key);
+                        Console.WriteLine("Retrieved value :" + value);
+                    }
+                    catch (InvalidOperationException) //if this exception is thrown, the key wasn't found
+                    {
+                        Console.WriteLine("Key not found");
+                    }
+                    ;
+                    break;
+
+                case 'p': //print entire hashtable
+                    table.Print();
+                    Console.WriteLine("hit enter to return"); //makes reading the actual print easier (because menu doesn't immediately pop back up)
+                    Console.ReadLine();
+                    break;
+
+                case 'a': //generates default hashtable used when developing modification, we didn't have the heart to delete it
+                    table.MakeEmpty();
+                    int size = 10;
+                    Point[,] tester = new Point[size, size]; //2d key array
+                    int i = 0; //values to insert, indexed so insertion order can be seen in print
+                    for (int ix = 0; ix < size; ix++) //x coords
+                    { //rows
+                        for (int iy = 0; iy < size; iy++) //y coords
+                        { //columns
+                            i++;
+                            tester[ix, iy] = new Point(ix, iy); //set key to coords
+                            table.Insert(tester[ix, iy], i); //insert i as value using current key
+                        }
+                    }
+                    table.Print(); //print it
+                    Console.WriteLine("hit enter to return"); //makes reading the actual print easier (because menu doesn't immediately pop back up)
+                    Console.ReadLine();
+                    break;
+
+                case 'q': //quit
+                    run = false; //main loop control variable
+                    break;
+                default: //if menu input was a char but didn't match up with any valid menu operations
+                    Console.WriteLine("Unrecognised input, please try again");
+                    break;
             }
         }
-        table.Print();
-        Console.WriteLine("finished");
-        Console.ReadLine();
     }
 }
