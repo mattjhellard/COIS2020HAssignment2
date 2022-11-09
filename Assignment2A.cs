@@ -46,8 +46,7 @@ public class HashTable<TKey, TValue> : IHashTable<TKey, TValue>
     {
         for (int i = 0; i < numBuckets; i++)
         {
-            HT[i] = null;
-            header[i] = HT[i];
+            header[i] = HT[i] = null;
         }
         numItems = 0;
     }
@@ -79,10 +78,13 @@ public class HashTable<TKey, TValue> : IHashTable<TKey, TValue>
         return k;
     }
 
+    // Rehash
+    // Doubles the size of the hash table to the next highest prime number
+    // Rehashes the items from the original hash table
     private void ReHash()
     {
-        int oldNumBuckets = numBuckets;
-        Node[] oldHT = HT;
+        int oldNumBuckets = numBuckets; //old number of buckets
+        Node[] oldHT = header; //old hashtable
 
         numBuckets = NextPrime(2 * numBuckets);
         HT = new Node[numBuckets];
@@ -92,9 +94,10 @@ public class HashTable<TKey, TValue> : IHashTable<TKey, TValue>
         for (int i = 0; i < oldNumBuckets; i++)
         {
             Node p = oldHT[i];
+            int k;
             while (p != null)
             {
-                int k = p.key.GetHashCode() % numBuckets;
+                k = p.key.GetHashCode() % numBuckets;
                 HT[k] = new Node(p.key, p.value, HT[k]);
                 header[k] = HT[k];
                 numItems++;
@@ -109,7 +112,7 @@ public class HashTable<TKey, TValue> : IHashTable<TKey, TValue>
     public void Insert(TKey key, TValue value)
     {
         int i = key.GetHashCode() % numBuckets;
-        Node p = HT[i];
+        Node p = header[i];
 
         while (p != null)
         {
@@ -123,27 +126,16 @@ public class HashTable<TKey, TValue> : IHashTable<TKey, TValue>
                 p = p.next;
             }
         }
-        if (HT[i] == null || key.GetHashCode() <= HT[i].key.GetHashCode()) //cases for inserting new pair in front (bucket is empty or key is less than/equal to front of existing bucket)
-        {
-            HT[i] = new Node(key, value, HT[i]); //bucket redefined as new pair with old bucket as the next(s)
-            numItems++;
-        }
-        else //if new pair isn't going to go in front of bucket
-        {
-            p = HT[i]; //p equals front of bucket again
-            while (p.next != null && key.GetHashCode() > p.next.key.GetHashCode()) //while next isn't null and key code is greater than next key code
-            {
-                p = p.next; //go to next node
-            } //exits when next value is null or key code is not greater than it
-            p.next = new Node(key, value, p.next); //next node equals insertion node with its next node as the old next node
-            numItems++;
-        }
+        header[i] = new Node(key, value, header[i]);
+        numItems++;
 
         // Rehash if the average size of the buckets exceeds 5.0
         if ((double)numItems / numBuckets > 5.0)
         {
             ReHash();
         }
+
+        Output();
     }
 
     // Remove
@@ -152,7 +144,7 @@ public class HashTable<TKey, TValue> : IHashTable<TKey, TValue>
     public bool Remove(TKey key)
     {
         int i = key.GetHashCode() % numBuckets;
-        Node p = HT[i];
+        Node p = header[i];
 
         if (p == null)
         {
@@ -163,7 +155,7 @@ public class HashTable<TKey, TValue> : IHashTable<TKey, TValue>
             // Successful remove of the first item in a bucket
             if (p.key.Equals(key))
             {
-                HT[i] = HT[i].next;
+                header[i] = header[i].next;
                 numItems--;
                 return true;
             }
@@ -195,7 +187,7 @@ public class HashTable<TKey, TValue> : IHashTable<TKey, TValue>
     public TValue Retrieve(TKey key)
     {
         int i = key.GetHashCode() % numBuckets;
-        Node p = HT[i];
+        Node p = header[i];
 
         while (p != null)
         {
@@ -213,18 +205,65 @@ public class HashTable<TKey, TValue> : IHashTable<TKey, TValue>
         throw new InvalidOperationException("Key not found");
     }
 
-    public void Output()
+    // Print
+    // Prints the hash table entries, one line per bucket
+    public void Print()
     {
-        for (int i = 0; i < numBuckets; i++)
+        int i;
+        Node p;
+
+        for (i = 0; i < numBuckets; i++)
         {
-            Console.Write(i + ":");
-            Node p = HT[i];
+            Console.Write(i.ToString().PadLeft(2) + ": ");
+
+            p = header[i];
             while (p != null)
             {
-                Console.Write("<" + p.key.GetHashCode() + "," + p.value + "> ");
+                Console.Write("<" + p.key.ToString() + "," + p.value.ToString() + "> ");
                 p = p.next;
             }
             Console.WriteLine();
+        }
+    }
+
+    public void Output()
+    {
+        for (int i = 0; i < numBuckets; i++) //for each bucket
+        {
+            Node unsorted = header[i]; //current bucket
+            Node sorted = null; //should be new bucket once sort is finished
+            while (unsorted != null) //unsorted should empty as each value is sorted one at a time
+            {
+                Node Max = new Node(unsorted.key, unsorted.value); //initial max value is front of node
+                Node p = unsorted; //traversal node
+                while (p.next != null) //traversing entire node chain
+                {
+                    if (p.next.key.GetHashCode() >= Max.key.GetHashCode()) //if the next node's key has a higher (or equal) hash code to the current
+                    {
+                        Max = new Node(p.next.key, p.next.value); //set max to the node value that was determined to be bigger based on the key
+                    }
+                    p = p.next; //go to the next node
+                } //once exited every node in unsorted should have been tested and Max should currently be the key and value with the biggest hashcode
+                sorted = new Node(Max.key, Max.value, sorted); //add the biggest node still in unsorted to sorted
+                //removing current max node from unsorted
+                p = unsorted;
+                if (unsorted.key.Equals(Max.key))
+                { //if first value in unsorted matches max key
+                    unsorted = unsorted.next; //trim first value
+                }
+                else
+                {
+                    while (p != null && p.next != null) //go through unsorted,
+                    {
+                        if (p.next.key.Equals(Max.key)) //once max found,
+                        {
+                            p.next = p.next.next; //trim it
+                        }
+                        p = p.next;
+                    }
+                }
+            }
+            header[i] = sorted; //sorted should now contain, in order, every node from unsorted, so set the bucket to sorted 
         }
     }
 }
@@ -295,7 +334,8 @@ public class Demo
                 table.Insert(tester[ix, iy], i);
             }
         }
-        table.Output();
+        table.Print();
+        Console.WriteLine("finished");
         Console.ReadLine();
     }
 }
