@@ -282,7 +282,7 @@ public class Point : IComparable
 
     public override int GetHashCode()
     {
-        return Math.Abs(x * x + y * y); //hashcode is kept simple to make testing easier to understand
+        return Math.Abs(x * y); //hashcode is kept simple to make testing easier to understand
     }
 
     public override bool Equals(object obj)
@@ -301,6 +301,7 @@ public class Point : IComparable
     public override string ToString()
     {
         return ("[" + x + " " + y + "]");
+        //return Convert.ToString(Math.Abs(x * y));
     }
 
     public int CompareTo(object obj)
