@@ -336,5 +336,6 @@ class TestClass
             string decodedTestString = huffmanTest.Decode(encodedTestString);
             Console.WriteLine(decodedTestString);
         }
+        Console.ReadLine();
     }
 }
